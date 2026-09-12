@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const connectDB = require('./config/db');
+const User = require('./models/User');
 const healthRoutes = require('./routes/healthRoutes');
 const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes');
@@ -16,6 +17,22 @@ dotenv.config();
 
 // Connect to MongoDB Database
 connectDB();
+// Ensure demo accounts exist (useful for in‑memory fallback and local dev)
+const ensureDemoUsers = async () => {
+  const demoUsers = [
+    { name: 'Demo Admin', email: 'admin@example.com', password: 'admin123', phone: '9000000001', role: 'admin' },
+    { name: 'Demo Organizer', email: 'organizer@example.com', password: 'organizer123', phone: '9000000002', role: 'organizer' },
+    { name: 'Demo Customer', email: 'customer@example.com', password: 'customer123', phone: '9000000003', role: 'customer' }
+  ];
+  for (const u of demoUsers) {
+    const exists = await User.findOne({ email: u.email });
+    if (!exists) {
+      await User.create(u);
+      console.log(`[Seed] Created demo user: ${u.email}`);
+    }
+  }
+};
+ensureDemoUsers().catch(err => console.error('Demo user seeding error:', err));
 
 // Initialize Express Application
 const app = express();

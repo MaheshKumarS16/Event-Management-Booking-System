@@ -1,11 +1,11 @@
 const express = require('express');
-const { protect } = require('../middleware/auth'); // assuming auth middleware provides protect
+const { authenticateUser } = require('../middleware/authMiddleware'); // corrected import
 const { getCustomerDashboard, getCustomerProfile } = require('../controllers/customerController');
 
 const router = express.Router();
 
 // Protect all routes
-router.use(protect);
+router.use(authenticateUser); // protect routes with authentication
 
 // GET /api/customer/dashboard
 router.get('/dashboard', getCustomerDashboard);
