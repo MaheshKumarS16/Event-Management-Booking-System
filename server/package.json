@@ -6,9 +6,17 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "seed": "node seed.js"
   },
-  "keywords": ["eventify", "event-management", "booking-system", "express", "mongodb", "mongoose"],
+  "keywords": [
+    "eventify",
+    "event-management",
+    "booking-system",
+    "express",
+    "mongodb",
+    "mongoose"
+  ],
   "author": "Mahesh - Full Stack Developer",
   "license": "ISC",
   "dependencies": {

@@ -9,14 +9,29 @@ const mongoose = require('mongoose');
  * - Where we use it: Called during server initialization in server.js.
  */
 const connectDB = async () => {
+  const primaryUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/eventify_db';
+
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    // Attempt connecting to primary MongoDB URI (Local MongoDB or Atlas)
+    const conn = await mongoose.connect(primaryUri, {
+      serverSelectionTimeoutMS: 2500 // Quick timeout for fast fallback if local service isn't running
+    });
     console.log(`[Database] MongoDB Connected Successfully: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`[Database Error] Connection failed: ${error.message}`);
-    console.error(`[Database Note] Make sure MongoDB server is running locally on port 27017 or update MONGODB_URI in server/.env`);
-    // Exit process with failure code if unable to connect
-    process.exit(1);
+    console.warn(`[Database Warning] Primary connection to (${primaryUri}) failed: ${error.message}`);
+    console.log(`[Database Fallback] Initializing In-Memory MongoDB Server...`);
+
+    try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      const mongoServer = await MongoMemoryServer.create();
+      const memoryUri = mongoServer.getUri();
+      
+      const conn = await mongoose.connect(memoryUri);
+      console.log(`[Database] In-Memory MongoDB Connected Successfully at: ${memoryUri}`);
+    } catch (fallbackErr) {
+      console.error(`[Database Error] Fallback connection failed: ${fallbackErr.message}`);
+      process.exit(1);
+    }
   }
 };
 
