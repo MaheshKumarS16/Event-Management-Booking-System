@@ -21,7 +21,7 @@ export const getPublishedEvents = async (params = {}) => {
       };
     }
   } catch (error) {
-    console.warn('[EventService] Backend API unreachable or empty. Using client dataset.');
+    console.warn('[EventService] Backend API unreachable or empty. Using client dataset.', error);
   }
 
   // Client-side fallback dataset when DB is initializing
@@ -50,7 +50,7 @@ export const getEventDetailsById = async (eventId) => {
       return response.data.data;
     }
   } catch (error) {
-    console.warn(`[EventService] Event ID ${eventId} fetch error. Checking mock fallback.`);
+    console.warn(`[EventService] Event ID ${eventId} fetch error. Checking mock fallback.`, error);
   }
 
   return MOCK_EVENTS.find(e => e.id === eventId) || MOCK_EVENTS[0];
@@ -63,7 +63,7 @@ export const getActiveCategories = async () => {
       return response.data.data;
     }
   } catch (error) {
-    console.warn('[EventService] Category fetch error. Using mock categories.');
+    console.warn('[EventService] Category fetch error. Using mock categories.', error);
   }
 
   return MOCK_CATEGORIES;

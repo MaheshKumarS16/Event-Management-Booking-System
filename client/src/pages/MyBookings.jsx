@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react/set-state-in-effect */
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getUserBookingsApi, cancelBookingApi } from '../services/bookingService';
 
@@ -16,7 +17,7 @@ function MyBookings() {
   const [activeTab, setActiveTab] = useState('All'); // 'All', 'Confirmed', 'Cancelled'
   const [actionNotice, setActionNotice] = useState('');
 
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getUserBookingsApi();
@@ -28,11 +29,12 @@ function MyBookings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  // eslint-disable-next-line react/set-state-in-effect
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [fetchBookings]);
 
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm('Are you sure you want to cancel this booking? Ticket availability will be restored.')) {

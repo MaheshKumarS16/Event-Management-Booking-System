@@ -1,3 +1,4 @@
+/* eslint-disable react/only-export-components */
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import API from '../services/api';
 
@@ -9,7 +10,7 @@ import API from '../services/api';
  * - Why we need it: Makes logged-in user details (`user`, `token`, `role`) accessible to all components without prop drilling.
  * - Where we use it: Wrapped around the root application in App.jsx and consumed via useAuth() hook.
  */
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -90,7 +91,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom Hook to consume AuthContext cleanly
+// Export useAuth hook for consuming AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

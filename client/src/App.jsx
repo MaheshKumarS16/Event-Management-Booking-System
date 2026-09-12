@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import AppRoutes from './routes/AppRoutes';
+const AppRoutes = React.lazy(() => import('./routes/AppRoutes'));
 
 /**
  * Eventify Main Root Component
- * 
+ *
  * Concept Explanation:
  * - What it is: Primary layout wrapper for the entire frontend application.
  * - Why we need it: Wraps application in Router and AuthProvider context store.
@@ -23,7 +23,9 @@ function App() {
 
           {/* Main Routed Page Content */}
           <main style={{ flex: 1 }}>
-            <AppRoutes />
+            <Suspense fallback={<div className="loader">Loading…</div>}>
+              <AppRoutes />
+            </Suspense>
           </main>
 
           {/* Global Footer */}

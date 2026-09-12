@@ -7,6 +7,7 @@ const healthRoutes = require('./routes/healthRoutes');
 const authRoutes = require('./routes/authRoutes');
 const eventRoutes = require('./routes/eventRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const customerRoutes = require('./routes/customerRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -38,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/customer', customerRoutes);
 
 // Catch 404 for non-existing endpoints
 app.use((req, res, next) => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../services/api';
+import ThemeToggle from '../components/ThemeToggle';
 
 /**
  * Global Navigation Header Component (Connected to Auth Context & Bookings)
@@ -186,6 +187,9 @@ function Navbar() {
             </>
           )}
         </nav>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* Mobile Toggle Button */}
         <button

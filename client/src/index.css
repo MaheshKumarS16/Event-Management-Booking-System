@@ -44,11 +44,12 @@
 
 body {
   font-family: var(--font-family);
-  background-color: var(--bg-dark);
+  background: var(--bg-light);
   color: var(--text-main);
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.25s;
 }
 
 a {
@@ -87,7 +88,7 @@ button {
 
 /* Glassmorphism Card */
 .glass-card {
-  background: var(--bg-glass);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-light);
@@ -154,4 +155,33 @@ button {
 .pulse-dot.offline {
   background-color: var(--error);
   box-shadow: 0 0 10px var(--error);
+}
+
+/* New design system additions */
+:root {
+  --primary: hsl(260, 80%, 60%);
+  --bg-light: hsl(220, 15%, 95%);
+  --bg-dark: hsl(220, 20%, 12%);
+  --glass-bg: rgba(255,255,255,0.12);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: rgba(255,255,255,0.1);
+  --radius-md: 0.5rem;
+}
+.dark {
+  --primary: hsl(260, 80%, 70%);
+  --bg-light: var(--bg-dark);
+  --glass-bg: rgba(0,0,0,0.3);
+}
+body {
+  background: var(--bg-light);
+  transition: background 0.25s;
+}
+.filter-panel {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease;
+}
+.filter-panel.open {
+  max-height: 500px;
 }

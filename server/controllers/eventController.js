@@ -16,7 +16,7 @@ const Booking = require('../models/Booking');
 // @access  Public
 const getEvents = async (req, res, next) => {
   try {
-    const { search, category, city, maxPrice, sortBy, page = 1, limit = 10, status } = req.query;
+    const { search, category, city, maxPrice, sortBy, page = 1, limit = 10, status, dateFrom, dateTo, ticketType } = req.query;
 
     let query = {};
 
@@ -56,6 +56,18 @@ const getEvents = async (req, res, next) => {
     // Starting Price Filter
     if (maxPrice) {
       query['ticketTypes.price'] = { $lte: Number(maxPrice) };
+    }
+
+    // Date range filter (ISO date strings)
+    if (dateFrom || dateTo) {
+      query.startDate = {};
+      if (dateFrom) query.startDate.$gte = dateFrom;
+      if (dateTo) query.startDate.$lte = dateTo;
+    }
+
+    // Ticket type filter (ticketType name)
+    if (ticketType && ticketType !== 'All') {
+      query['ticketTypes.name'] = { $regex: ticketType, $options: 'i' };
     }
 
     // Sorting Options

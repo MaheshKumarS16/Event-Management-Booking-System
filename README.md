@@ -2,6 +2,7 @@
 
 [![Stack](https://img.shields.io/badge/Stack-MERN-blue.svg)](https://react.dev/)
 [![Status](https://img.shields.io/badge/Phase-1_Setup_Complete-success.svg)](#)
+[![CI](https://github.com/your-repo/Eventify/actions/workflows/ci.yml/badge.svg)](https://github.com/your-repo/Eventify/actions/workflows/ci.yml)
 
 Eventify is a full-stack Event Management & Booking System web application designed for discovering events, managing ticket availability, processing mock bookings, and managing role-based dashboards for Customers, Organizers, and Admins.
 

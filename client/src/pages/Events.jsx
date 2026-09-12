@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import EventCard from '../components/EventCard';
 import { getPublishedEvents, getActiveCategories } from '../services/eventService';
+import useDebounce from '../hooks/useDebounce';
 
 /**
  * PAGE 2 — EVENTS EXPLORER PAGE (Connected to REST API)
@@ -19,11 +20,17 @@ function Events() {
   const initialCity = searchParams.get('city') || 'All';
 
   const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedCity, setSelectedCity] = useState(initialCity);
   const [maxPrice, setMaxPrice] = useState(3000);
   const [sortBy, setSortBy] = useState('date');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [ticketType, setTicketType] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
+  const [uniqueTicketTypes, setUniqueTicketTypes] = useState([]);
+  const [showFilters, setShowFilters] = useState(true);
 
   const [events, setEvents] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -42,23 +49,34 @@ function Events() {
     const fetchEvents = async () => {
       setLoading(true);
       const params = {
-        search: searchTerm,
+        search: debouncedSearchTerm,
         category: selectedCategory,
         city: selectedCity,
         maxPrice,
         sortBy,
         page: currentPage,
-        limit: 6
+        limit: 6,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+        ticketType: ticketType !== 'All' ? ticketType : undefined
       };
 
       const result = await getPublishedEvents(params);
       setEvents(result.events);
       setTotalPages(result.totalPages);
+      // Compute unique ticket types for filter dropdown
+      const types = new Set();
+      result.events.forEach(ev => {
+        if (Array.isArray(ev.ticketTypes)) {
+          ev.ticketTypes.forEach(tt => types.add(tt.name));
+        }
+      });
+      setUniqueTicketTypes(Array.from(types));
       setLoading(false);
     };
 
     fetchEvents();
-  }, [searchTerm, selectedCategory, selectedCity, maxPrice, sortBy, currentPage]);
+  }, [debouncedSearchTerm, selectedCategory, selectedCity, maxPrice, sortBy, currentPage, dateFrom, dateTo, ticketType]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -86,7 +104,22 @@ function Events() {
       </div>
 
       {/* FILTER & SEARCH PANEL */}
-      <div className="glass-card" style={{ marginBottom: '2.5rem', padding: '1.5rem' }}>
+      <button
+        onClick={() => setShowFilters(prev => !prev)}
+        style={{
+          marginBottom: '0.75rem',
+          padding: '0.45rem 0.9rem',
+          borderRadius: 'var(--radius-md)',
+          backgroundColor: 'var(--primary-light)',
+          color: '#f8fafc',
+          border: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        {showFilters ? 'Hide Filters' : 'Show Filters'}
+      </button>
+      {showFilters && (
+        <div className={`glass-card filter-panel ${showFilters ? 'open' : ''}`} style={{ marginBottom: '2.5rem', padding: '1.5rem' }}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -182,6 +215,43 @@ function Events() {
             />
           </div>
 
+          {/* Ticket Type Filter */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
+              Ticket Type
+            </label>
+            <select
+              value={ticketType}
+              onChange={(e) => { setTicketType(e.target.value); setCurrentPage(1); }}
+              style={{
+                width: '100%',
+                padding: '0.65rem 0.9rem',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--bg-dark)',
+                border: '1px solid var(--border)',
+                color: '#f8fafc',
+                fontSize: '0.9rem'
+              }}
+            >
+              <option value="All">All Types</option>
+              {uniqueTicketTypes.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date Range Filter */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>From</label>
+              <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }} style={{ width: '100%', padding: '0.4rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border)', color: '#f8fafc' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>To</label>
+              <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }} style={{ width: '100%', padding: '0.4rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-dark)', border: '1px solid var(--border)', color: '#f8fafc' }} />
+            </div>
+          </div>
+
           {/* Sort Option */}
           <div>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
@@ -226,6 +296,7 @@ function Events() {
           </button>
         </div>
       </div>
+)}
 
       {/* RESULTS BAR */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 /**
  * Reusable Ticket Selector Component
@@ -9,16 +9,13 @@ import React, { useState, useEffect } from 'react';
  * - Where we use it: Rendered on EventDetails sidebar and Checkout page.
  */
 function TicketSelector({ ticketTypes = [], onSelectionChange }) {
-  const [quantities, setQuantities] = useState({});
-
-  useEffect(() => {
-    // Initialize quantity state
-    const initialQty = {};
+  const [quantities, setQuantities] = useState(() => {
+    const init = {};
     ticketTypes.forEach(ticket => {
-      initialQty[ticket._id || ticket.id] = 0;
+      init[ticket._id || ticket.id] = 0;
     });
-    setQuantities(initialQty);
-  }, [ticketTypes]);
+    return init;
+  });
 
   const handleIncrement = (ticket) => {
     const id = ticket._id || ticket.id;

@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema(
       },
       default: 'customer'
     },
+    // Favorites: array of Event ObjectIds
+    favorites: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Event'
+    }],
     status: {
       type: String,
       enum: ['active', 'blocked'],

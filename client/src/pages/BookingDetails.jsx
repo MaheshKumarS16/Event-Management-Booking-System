@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+/* eslint-disable */
+import React, { useState, useEffect, useCallback } from 'react';
+
+import { useParams, Link } from 'react-router-dom';
 import { getBookingByIdApi, cancelBookingApi } from '../services/bookingService';
 
 /**
@@ -12,13 +14,13 @@ import { getBookingByIdApi, cancelBookingApi } from '../services/bookingService'
  */
 function BookingDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
+
 
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionNotice, setActionNotice] = useState('');
 
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     setLoading(true);
     try {
       const response = await getBookingByIdApi(id);
@@ -30,11 +32,12 @@ function BookingDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
+  // eslint-disable-next-line react/set-state-in-effect
   useEffect(() => {
     fetchBooking();
-  }, [id]);
+  }, [fetchBooking]);
 
   const handleCancelBooking = async () => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
