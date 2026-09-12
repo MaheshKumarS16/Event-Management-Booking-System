@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const connectDB = require('./config/db');
 const healthRoutes = require('./routes/healthRoutes');
+const authRoutes = require('./routes/authRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 // Load environment variables from .env file
@@ -30,6 +31,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Mount API Routes
 app.use('/api', healthRoutes);
+app.use('/api/auth', authRoutes);
 
 // Catch 404 for non-existing endpoints
 app.use((req, res, next) => {
@@ -50,6 +52,7 @@ const server = app.listen(PORT, () => {
   console.log(`==================================================`);
   console.log(`  🎉 Eventify Server running on port ${PORT}`);
   console.log(`  📡 Health Check: http://localhost:${PORT}/api/health`);
+  console.log(`  🔐 Auth Endpoint: http://localhost:${PORT}/api/auth`);
   console.log(`  🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`==================================================`);
 });

@@ -1,23 +1,27 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { DEMO_CREDENTIALS } from '../utils/mockData';
 
 /**
- * PAGE 4 — LOGIN PAGE
+ * PAGE 4 — LOGIN PAGE (Connected to Backend Authentication API)
  * 
  * Concept Explanation:
- * - What it is: Authentication page for Customer, Organizer, and Admin roles.
- * - Why we need it: Verifies user credentials and generates JWT session token.
+ * - What it is: Authentication page connected to backend REST API POST /api/auth/login.
+ * - Why we need it: Authenticates user credentials against MongoDB database and stores JWT session token.
  * - Where we use it: Mounted at route path '/login'.
  */
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Quick fill helper for easy testing
   const handleQuickFill = (roleKey) => {
@@ -28,7 +32,7 @@ function Login() {
     setSuccessMsg(`Filled ${creds.role} credentials! Click Sign In.`);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
@@ -38,18 +42,19 @@ function Login() {
       return;
     }
 
-    // Determine role from input (Phase 2 simulated auth)
-    let role = 'Customer';
-    if (email.toLowerCase().includes('organizer')) role = 'Organizer';
-    if (email.toLowerCase().includes('admin')) role = 'Admin';
+    setIsSubmitting(true);
+    const result = await login(email, password);
+    setIsSubmitting(false);
 
-    setSuccessMsg(`Login Successful as ${role}! Redirecting to ${role} Dashboard...`);
-    
-    setTimeout(() => {
-      if (role === 'Customer') navigate('/events');
-      else if (role === 'Organizer') navigate('/events');
-      else navigate('/events');
-    }, 1200);
+    if (result.success) {
+      setSuccessMsg(`Authenticated as ${result.user.name} (${result.user.role.toUpperCase()})! Redirecting...`);
+      const redirectPath = location.state?.from?.pathname || '/events';
+      setTimeout(() => {
+        navigate(redirectPath);
+      }, 1000);
+    } else {
+      setError(result.message);
+    }
   };
 
   return (
@@ -226,11 +231,12 @@ function Login() {
 
             {/* Submit Button */}
             <button 
-              type="submit" 
+              type="submit"
+              disabled={isSubmitting}
               className="btn-primary"
-              style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', marginTop: '0.5rem' }}
+              style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', marginTop: '0.5rem', opacity: isSubmitting ? 0.7 : 1 }}
             >
-              Sign In
+              {isSubmitting ? 'Authenticating...' : 'Sign In'}
             </button>
           </form>
 

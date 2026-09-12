@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import API from '../services/api';
 
 /**
- * Global Navigation Header Component
+ * Global Navigation Header Component (Connected to Auth Context)
  * 
  * Concept Explanation:
- * - What it is: A reusable navbar visible across all pages.
- * - Why we need it: Provides quick navigation links (Home, Events, Login, Register) and brand identification.
- * - Where we use it: Embedded in App.jsx layout wrapper.
+ * - What it is: Reusable navbar reflecting live user authentication state.
+ * - Why we need it: Provides navigation and user status (Customer, Organizer, Admin badge & Logout button).
+ * - Where we use it: Rendered in App.jsx.
  */
 function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [apiConnected, setApiConnected] = useState(true);
 
@@ -23,6 +27,11 @@ function Navbar() {
   }, []);
 
   const isActive = (path) => location.pathname === path;
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header style={{
@@ -94,29 +103,75 @@ function Navbar() {
           
           <div style={{ height: '20px', width: '1px', backgroundColor: 'var(--border)' }}></div>
 
-          <Link 
-            to="/login"
-            style={{
-              padding: '0.55rem 1.2rem',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border)',
-              fontWeight: '600',
-              fontSize: '0.9rem',
-              color: isActive('/login') ? 'var(--primary)' : 'var(--text-main)',
-              backgroundColor: isActive('/login') ? 'var(--primary-light)' : 'transparent',
-              transition: 'all 0.2s'
-            }}
-          >
-            Sign In
-          </Link>
+          {/* User Profile Badge or Login/Register Actions */}
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--primary-light)',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '700',
+                  fontSize: '0.9rem'
+                }}>
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: '700', color: '#f8fafc' }}>
+                    {user.name}
+                  </span>
+                  <span className={`badge ${user.role === 'admin' ? 'badge-error' : user.role === 'organizer' ? 'badge-warning' : 'badge-success'}`} style={{ fontSize: '0.68rem', padding: '0.1rem 0.4rem' }}>
+                    {user.role.toUpperCase()}
+                  </span>
+                </div>
+              </div>
 
-          <Link 
-            to="/register" 
-            className="btn-primary"
-            style={{ padding: '0.55rem 1.3rem', fontSize: '0.9rem' }}
-          >
-            Register
-          </Link>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--error-bg)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  color: 'var(--error)',
+                  fontSize: '0.82rem',
+                  fontWeight: '600'
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link 
+                to="/login"
+                style={{
+                  padding: '0.55rem 1.2rem',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border)',
+                  fontWeight: '600',
+                  fontSize: '0.9rem',
+                  color: isActive('/login') ? 'var(--primary)' : 'var(--text-main)',
+                  backgroundColor: isActive('/login') ? 'var(--primary-light)' : 'transparent'
+                }}
+              >
+                Sign In
+              </Link>
+
+              <Link 
+                to="/register" 
+                className="btn-primary"
+                style={{ padding: '0.55rem 1.3rem', fontSize: '0.9rem' }}
+              >
+                Register
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* Mobile Toggle Button */}
@@ -149,8 +204,16 @@ function Navbar() {
         }}>
           <Link to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link>
           <Link to="/events" onClick={() => setMobileMenuOpen(false)}>Explore Events</Link>
-          <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
-          <Link to="/register" onClick={() => setMobileMenuOpen(false)}>Register</Link>
+          {user ? (
+            <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} style={{ color: 'var(--error)', textAlign: 'left' }}>
+              Sign Out ({user.name})
+            </button>
+          ) : (
+            <>
+              <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+              <Link to="/register" onClick={() => setMobileMenuOpen(false)}>Register</Link>
+            </>
+          )}
         </div>
       )}
     </header>

@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 /**
- * PAGE 5 — REGISTER PAGE
+ * PAGE 5 — REGISTER PAGE (Connected to Backend Authentication API)
  * 
  * Concept Explanation:
- * - What it is: Registration page allowing new users to create Customer or Organizer accounts.
- * - Why we need it: Captures name, email, phone, role, and password to store in the database.
+ * - What it is: Registration view calling backend REST API POST /api/auth/register.
+ * - Why we need it: Allows new users to create verified Customer or Organizer accounts in MongoDB.
  * - Where we use it: Mounted at route path '/register'.
  */
 function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const [role, setRole] = useState('customer'); // 'customer' or 'organizer'
   const [formData, setFormData] = useState({
@@ -22,59 +24,63 @@ function Register() {
   });
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
 
     const { name, email, phone, password, confirmPassword } = formData;
 
-    // Required Fields Validation
     if (!name || !email || !phone || !password || !confirmPassword) {
       setError('All fields are required.');
       return;
     }
 
-    // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email address.');
       return;
     }
 
-    // Phone validation
     if (phone.length < 10) {
       setError('Phone number must be at least 10 digits.');
       return;
     }
 
-    // Password length check
     if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
       return;
     }
 
-    // Password confirmation check
     if (password !== confirmPassword) {
       setError('Password and Confirm Password do not match.');
       return;
     }
 
-    // Check for duplicate email warning (against demo customer email)
-    if (email.toLowerCase() === 'mahesh.candidate@gmail.com') {
-      setError('This email address is already registered as a Customer demo account.');
-      return;
-    }
+    setIsSubmitting(true);
+    const result = await register({
+      name,
+      email,
+      phone,
+      password,
+      role
+    });
+    setIsSubmitting(false);
 
-    setSuccessMsg(`Registration successful as ${role.toUpperCase()}! Redirecting to login...`);
-    setTimeout(() => {
-      navigate('/login');
-    }, 1500);
+    if (result.success) {
+      setSuccessMsg(`Registration successful as ${role.toUpperCase()}! Redirecting...`);
+      setTimeout(() => {
+        navigate('/events');
+      }, 1200);
+    } else {
+      setError(result.message);
+    }
   };
 
   return (
@@ -289,18 +295,20 @@ function Register() {
             {/* Submit Button */}
             <button 
               type="submit" 
+              disabled={isSubmitting}
               className="btn-primary"
               style={{
                 width: '100%',
                 padding: '0.85rem',
                 fontSize: '1rem',
                 marginTop: '0.5rem',
+                opacity: isSubmitting ? 0.7 : 1,
                 background: role === 'organizer' 
                   ? 'linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%)' 
                   : 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)'
               }}
             >
-              Register as {role === 'organizer' ? 'Organizer' : 'Customer'}
+              {isSubmitting ? 'Creating Account...' : `Register as ${role === 'organizer' ? 'Organizer' : 'Customer'}`}
             </button>
           </form>
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import AppRoutes from './routes/AppRoutes';
@@ -9,25 +10,27 @@ import AppRoutes from './routes/AppRoutes';
  * 
  * Concept Explanation:
  * - What it is: Primary layout wrapper for the entire frontend application.
- * - Why we need it: Wraps all views in the Router provider and inserts sticky Navbar and Footer.
+ * - Why we need it: Wraps application in Router and AuthProvider context store.
  * - Where we use it: Rendered inside main.jsx into the DOM element.
  */
 function App() {
   return (
-    <Router>
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        {/* Global Navigation Header */}
-        <Navbar />
+    <AuthProvider>
+      <Router>
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          {/* Global Navigation Header */}
+          <Navbar />
 
-        {/* Main Routed Page Content */}
-        <main style={{ flex: 1 }}>
-          <AppRoutes />
-        </main>
+          {/* Main Routed Page Content */}
+          <main style={{ flex: 1 }}>
+            <AppRoutes />
+          </main>
 
-        {/* Global Footer */}
-        <Footer />
-      </div>
-    </Router>
+          {/* Global Footer */}
+          <Footer />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
