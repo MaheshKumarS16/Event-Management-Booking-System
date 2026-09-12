@@ -1,26 +1,58 @@
-import React, { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MOCK_EVENTS } from '../utils/mockData';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { getEventDetailsById } from '../services/eventService';
 
 /**
- * PAGE 3 — EVENT DETAILS PAGE
+ * PAGE 3 — EVENT DETAILS PAGE (Connected to REST API)
  * 
  * Concept Explanation:
- * - What it is: Detailed view for a single selected event.
+ * - What it is: Detailed view for a single selected event from REST API GET /api/events/:id.
  * - Why we need it: Displays comprehensive event schedule, venue address, organizer info, ticket pricing breakdown, and booking entry point.
  * - Where we use it: Mounted at route path '/events/:id'.
  */
 function EventDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
 
-  // Find target event in dataset
-  const event = MOCK_EVENTS.find(e => e.id === id) || MOCK_EVENTS[0];
-
-  const totalAvailable = event.totalCapacity - event.soldTickets;
-  const isBookable = event.status === 'Published' && totalAvailable > 0;
-
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [bookingNotice, setBookingNotice] = useState(null);
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      setLoading(true);
+      const data = await getEventDetailsById(id);
+      setEvent(data);
+      setLoading(false);
+    };
+
+    fetchEvent();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '4rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+        Loading event details...
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="container" style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
+        <h2 style={{ color: '#f8fafc' }}>Event Not Found</h2>
+        <Link to="/events" className="btn-primary" style={{ marginTop: '1rem' }}>Back to All Events</Link>
+      </div>
+    );
+  }
+
+  const categoryName = typeof event.category === 'object' ? event.category.name : event.category;
+  const organizerName = typeof event.organizer === 'object' ? event.organizer.name : event.organizer;
+
+  const totalCapacity = event.totalCapacity || event.ticketTypes.reduce((acc, t) => acc + t.quantity, 0);
+  const soldTickets = event.soldTickets !== undefined ? event.soldTickets : event.ticketTypes.reduce((acc, t) => acc + t.soldQuantity, 0);
+  const totalAvailable = totalCapacity - soldTickets;
+
+  const isBookable = (event.status === 'Published' || !event.status) && totalAvailable > 0;
 
   const handleBookClick = () => {
     if (!isBookable) return;
@@ -62,9 +94,9 @@ function EventDetails() {
           padding: '2rem'
         }}>
           <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-            <span className="badge badge-success">{event.category}</span>
-            <span className={`badge ${event.status === 'Published' ? 'badge-success' : 'badge-warning'}`}>
-              Status: {event.status}
+            <span className="badge badge-success">{categoryName}</span>
+            <span className={`badge ${event.status === 'Published' || !event.status ? 'badge-success' : 'badge-warning'}`}>
+              Status: {event.status || 'Published'}
             </span>
           </div>
 
@@ -161,7 +193,7 @@ function EventDetails() {
                 Hosted By
               </span>
               <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#f8fafc' }}>
-                {event.organizer}
+                {organizerName}
               </h4>
             </div>
           </div>
@@ -179,11 +211,11 @@ function EventDetails() {
 
           {/* Ticket Tiers Breakdown */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.75rem' }}>
-            {event.ticketTypes.map(ticket => {
+            {event.ticketTypes.map((ticket, index) => {
               const tierAvailable = ticket.quantity - ticket.soldQuantity;
               return (
                 <div 
-                  key={ticket.id}
+                  key={ticket._id || index}
                   style={{
                     padding: '1rem',
                     borderRadius: 'var(--radius-md)',
@@ -215,13 +247,13 @@ function EventDetails() {
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
               <span style={{ color: 'var(--text-muted)' }}>Ticket Availability</span>
               <span style={{ fontWeight: '700', color: totalAvailable > 0 ? 'var(--success)' : 'var(--error)' }}>
-                {totalAvailable} / {event.totalCapacity} Seats Available
+                {totalAvailable} / {totalCapacity} Seats Available
               </span>
             </div>
             <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--bg-dark)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
               <div style={{
                 height: '100%',
-                width: `${(event.soldTickets / event.totalCapacity) * 100}%`,
+                width: `${totalCapacity > 0 ? (soldTickets / totalCapacity) * 100 : 0}%`,
                 backgroundColor: 'var(--primary)'
               }}></div>
             </div>

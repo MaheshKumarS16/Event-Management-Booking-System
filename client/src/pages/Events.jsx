@@ -1,65 +1,64 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import EventCard from '../components/EventCard';
-import { MOCK_EVENTS, MOCK_CATEGORIES } from '../utils/mockData';
+import { getPublishedEvents, getActiveCategories } from '../services/eventService';
 
 /**
- * PAGE 2 — EVENTS EXPLORER PAGE
+ * PAGE 2 — EVENTS EXPLORER PAGE (Connected to REST API)
  * 
  * Concept Explanation:
- * - What it is: Search and filter view listing all published events.
+ * - What it is: Search and filter view listing all published events directly from Express REST API.
  * - Why we need it: Enables users to search, filter by city/category/price, and sort events dynamically.
  * - Where we use it: Mounted at route path '/events'.
  */
 function Events() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Read initial query params from URL
   const initialCategory = searchParams.get('category') || 'All';
   const initialSearch = searchParams.get('search') || '';
   const initialCity = searchParams.get('city') || 'All';
 
-  // State Filters
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedCity, setSelectedCity] = useState(initialCity);
   const [maxPrice, setMaxPrice] = useState(3000);
   const [sortBy, setSortBy] = useState('date');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
 
-  // Extract unique cities from mock dataset
-  const cities = ['All', ...new Set(MOCK_EVENTS.map(e => e.city))];
+  const [events, setEvents] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
 
-  // Filtering & Sorting Logic
-  const filteredEvents = useMemo(() => {
-    return MOCK_EVENTS.filter(event => {
-      // Search term matching (Title or Description)
-      const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            event.description.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // Category matching
-      const matchesCategory = selectedCategory === 'All' || event.category === selectedCategory;
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const catData = await getActiveCategories();
+      setCategories(catData);
+    };
+    fetchCategories();
+  }, []);
 
-      // City matching
-      const matchesCity = selectedCity === 'All' || event.city.toLowerCase() === selectedCity.toLowerCase();
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      const params = {
+        search: searchTerm,
+        category: selectedCategory,
+        city: selectedCity,
+        maxPrice,
+        sortBy,
+        page: currentPage,
+        limit: 6
+      };
 
-      // Price filter
-      const matchesPrice = event.startingPrice <= maxPrice;
+      const result = await getPublishedEvents(params);
+      setEvents(result.events);
+      setTotalPages(result.totalPages);
+      setLoading(false);
+    };
 
-      return matchesSearch && matchesCategory && matchesCity && matchesPrice;
-    }).sort((a, b) => {
-      if (sortBy === 'price-low') return a.startingPrice - b.startingPrice;
-      if (sortBy === 'price-high') return b.startingPrice - a.startingPrice;
-      if (sortBy === 'popularity') return b.soldTickets - a.soldTickets;
-      // Default: sort by date
-      return new Date(a.startDate) - new Date(b.startDate);
-    });
-  }, [searchTerm, selectedCategory, selectedCity, maxPrice, sortBy]);
-
-  // Pagination Math
-  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage) || 1;
-  const paginatedEvents = filteredEvents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    fetchEvents();
+  }, [searchTerm, selectedCategory, selectedCity, maxPrice, sortBy, currentPage]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -70,6 +69,8 @@ function Events() {
     setCurrentPage(1);
     setSearchParams({});
   };
+
+  const cities = ['All', 'Chennai', 'Bangalore', 'Hyderabad', 'Mumbai', 'New Delhi'];
 
   return (
     <div className="container" style={{ padding: '2.5rem 1.5rem 4rem 1.5rem' }}>
@@ -134,8 +135,8 @@ function Events() {
               }}
             >
               <option value="All">All Categories</option>
-              {MOCK_CATEGORIES.map(c => (
-                <option key={c.id} value={c.name}>{c.name}</option>
+              {categories.map(c => (
+                <option key={c._id || c.id} value={c.name}>{c.name}</option>
               ))}
             </select>
           </div>
@@ -229,19 +230,21 @@ function Events() {
       {/* RESULTS BAR */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-          Showing <strong>{paginatedEvents.length}</strong> of <strong>{filteredEvents.length}</strong> published events
+          Showing <strong>{events.length}</strong> published events
         </p>
       </div>
 
       {/* EVENTS GRID */}
-      {paginatedEvents.length > 0 ? (
+      {loading ? (
+        <p style={{ color: 'var(--text-muted)' }}>Loading events...</p>
+      ) : events.length > 0 ? (
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: '2rem'
         }}>
-          {paginatedEvents.map(event => (
-            <EventCard key={event.id} event={event} />
+          {events.map(event => (
+            <EventCard key={event._id || event.id} event={event} />
           ))}
         </div>
       ) : (

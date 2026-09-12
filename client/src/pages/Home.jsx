@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import EventCard from '../components/EventCard';
-import { MOCK_EVENTS, MOCK_CATEGORIES } from '../utils/mockData';
+import { getPublishedEvents, getActiveCategories } from '../services/eventService';
 
 /**
- * PAGE 1 — HOME PAGE
+ * PAGE 1 — HOME PAGE (Connected to Backend API)
  * 
  * Concept Explanation:
- * - What it is: Primary landing page of the Eventify application.
- * - Why we need it: Introduces platform value proposition, search bar, featured events, and category discovery.
+ * - What it is: Primary landing page fetching live published events and categories from Express REST API.
+ * - Why we need it: Introduces platform features, search bar, featured events, and category catalog.
  * - Where we use it: Mounted at route path '/'.
  */
 function Home() {
@@ -16,13 +16,32 @@ function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [cityQuery, setCityQuery] = useState('');
 
+  const [events, setEvents] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const [eventsData, catData] = await Promise.all([
+        getPublishedEvents(),
+        getActiveCategories()
+      ]);
+      setEvents(eventsData.events);
+      setCategories(catData);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     navigate(`/events?search=${encodeURIComponent(searchQuery)}&city=${encodeURIComponent(cityQuery)}`);
   };
 
-  const featuredEvents = MOCK_EVENTS.filter(e => e.featured);
-  const upcomingEvents = MOCK_EVENTS.slice(0, 4);
+  const featuredEvents = events.filter(e => e.featured || e.status === 'Published').slice(0, 3);
+  const upcomingEvents = events.slice(0, 4);
 
   return (
     <div style={{ paddingBottom: '4rem' }}>
@@ -161,9 +180,9 @@ function Home() {
           gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
           gap: '1.25rem'
         }}>
-          {MOCK_CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <Link 
-              key={cat.id} 
+              key={cat._id || cat.id} 
               to={`/events?category=${encodeURIComponent(cat.name)}`}
               className="glass-card"
               style={{
@@ -176,9 +195,9 @@ function Home() {
                 transition: 'transform 0.2s, border-color 0.2s'
               }}
             >
-              <span style={{ fontSize: '2rem' }}>{cat.icon}</span>
+              <span style={{ fontSize: '2rem' }}>{cat.icon || '📅'}</span>
               <h3 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#f8fafc' }}>{cat.name}</h3>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>{cat.count} Events</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>Explore Events</span>
             </Link>
           ))}
         </div>
@@ -198,15 +217,19 @@ function Home() {
           </Link>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.75rem'
-        }}>
-          {featuredEvents.map(event => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        {loading ? (
+          <p style={{ color: 'var(--text-muted)' }}>Loading events catalog...</p>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.75rem'
+          }}>
+            {featuredEvents.map(event => (
+              <EventCard key={event._id || event.id} event={event} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* UPCOMING EVENTS SECTION */}
@@ -218,15 +241,19 @@ function Home() {
           </div>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.75rem'
-        }}>
-          {upcomingEvents.map(event => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        {loading ? (
+          <p style={{ color: 'var(--text-muted)' }}>Loading events...</p>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.75rem'
+          }}>
+            {upcomingEvents.map(event => (
+              <EventCard key={event._id || event.id} event={event} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* CALL TO ACTION BANNER */}
