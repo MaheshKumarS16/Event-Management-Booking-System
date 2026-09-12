@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getEventDetailsById } from '../services/eventService';
 
 /**
- * PAGE 3 — EVENT DETAILS PAGE (Connected to REST API)
+ * PAGE 3 — EVENT DETAILS PAGE (Connected to REST API & Checkout Flow)
  * 
  * Concept Explanation:
  * - What it is: Detailed view for a single selected event from REST API GET /api/events/:id.
@@ -12,10 +13,11 @@ import { getEventDetailsById } from '../services/eventService';
  */
 function EventDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [bookingNotice, setBookingNotice] = useState(null);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -56,7 +58,11 @@ function EventDetails() {
 
   const handleBookClick = () => {
     if (!isBookable) return;
-    setBookingNotice('Ticket selection logic will be enabled in Phase 6 (Booking & Ticket Selection)!');
+    if (!user) {
+      navigate('/login', { state: { from: { pathname: `/events/${id}/checkout` } } });
+      return;
+    }
+    navigate(`/events/${id}/checkout`);
   };
 
   return (
@@ -203,10 +209,10 @@ function EventDetails() {
         {/* Right Column: Ticket Tiers & Booking Action Sidebar */}
         <div className="glass-card" style={{ position: 'sticky', top: '100px' }}>
           <h2 style={{ fontSize: '1.3rem', fontWeight: '700', color: '#f8fafc', marginBottom: '0.5rem' }}>
-            Select Tickets
+            Ticket Tiers
           </h2>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-            Choose your preferred ticket tier below:
+            Choose your preferred ticket tier:
           </p>
 
           {/* Ticket Tiers Breakdown */}
@@ -259,21 +265,6 @@ function EventDetails() {
             </div>
           </div>
 
-          {/* Notice alert */}
-          {bookingNotice && (
-            <div style={{
-              padding: '0.85rem',
-              backgroundColor: 'var(--primary-light)',
-              border: '1px solid rgba(99,102,241,0.3)',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '0.85rem',
-              color: '#f8fafc',
-              marginBottom: '1rem'
-            }}>
-              💡 {bookingNotice}
-            </div>
-          )}
-
           {/* Primary Action Button */}
           <button 
             onClick={handleBookClick}
@@ -287,7 +278,7 @@ function EventDetails() {
               cursor: isBookable ? 'pointer' : 'not-allowed'
             }}
           >
-            {isBookable ? 'Book Now' : 'Booking Unavailable'}
+            {isBookable ? (user ? 'Proceed to Ticket Selection →' : 'Sign In to Book Tickets') : 'Booking Unavailable'}
           </button>
 
           {!isBookable && (

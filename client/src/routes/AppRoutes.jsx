@@ -5,23 +5,66 @@ import Events from '../pages/Events';
 import EventDetails from '../pages/EventDetails';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import Checkout from '../pages/Checkout';
+import BookingConfirmation from '../pages/BookingConfirmation';
+import MyBookings from '../pages/MyBookings';
+import BookingDetails from '../pages/BookingDetails';
+import ProtectedRoute from './ProtectedRoute';
 
 /**
  * Application Routing Module
  * 
  * Concept Explanation:
  * - What it is: A React Router component mapping URL paths to page views.
- * - Why we need it: Enables single-page application (SPA) client-side navigation without full page reloads.
- * - Where we use it: Embedded in App.jsx inside BrowserRouter wrapper.
+ * - Why we need it: Enables single-page application (SPA) client-side navigation and protected routes.
+ * - Where we use it: Embedded in App.jsx.
  */
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/events" element={<Events />} />
       <Route path="/events/:id" element={<EventDetails />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+
+      {/* Customer Protected Booking Routes */}
+      <Route 
+        path="/events/:id/checkout" 
+        element={
+          <ProtectedRoute allowedRoles={['customer', 'organizer', 'admin']}>
+            <Checkout />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/booking-confirmation" 
+        element={
+          <ProtectedRoute allowedRoles={['customer', 'organizer', 'admin']}>
+            <BookingConfirmation />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/my-bookings" 
+        element={
+          <ProtectedRoute allowedRoles={['customer', 'organizer', 'admin']}>
+            <MyBookings />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/bookings/:id" 
+        element={
+          <ProtectedRoute allowedRoles={['customer', 'organizer', 'admin']}>
+            <BookingDetails />
+          </ProtectedRoute>
+        } 
+      />
 
       {/* Fallback route */}
       <Route path="*" element={<Navigate to="/" replace />} />

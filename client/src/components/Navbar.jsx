@@ -4,10 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import API from '../services/api';
 
 /**
- * Global Navigation Header Component (Connected to Auth Context)
+ * Global Navigation Header Component (Connected to Auth Context & Bookings)
  * 
  * Concept Explanation:
- * - What it is: Reusable navbar reflecting live user authentication state.
+ * - What it is: Reusable navbar reflecting live user authentication state and booking links.
  * - Why we need it: Provides navigation and user status (Customer, Organizer, Admin badge & Logout button).
  * - Where we use it: Rendered in App.jsx.
  */
@@ -100,6 +100,19 @@ function Navbar() {
           >
             Explore Events
           </Link>
+
+          {user && (
+            <Link 
+              to="/my-bookings" 
+              style={{
+                fontWeight: isActive('/my-bookings') ? '700' : '500',
+                color: isActive('/my-bookings') ? 'var(--primary)' : 'var(--text-main)',
+                transition: 'color 0.2s'
+              }}
+            >
+              My Bookings
+            </Link>
+          )}
           
           <div style={{ height: '20px', width: '1px', backgroundColor: 'var(--border)' }}></div>
 
@@ -204,6 +217,7 @@ function Navbar() {
         }}>
           <Link to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link>
           <Link to="/events" onClick={() => setMobileMenuOpen(false)}>Explore Events</Link>
+          {user && <Link to="/my-bookings" onClick={() => setMobileMenuOpen(false)}>My Bookings</Link>}
           {user ? (
             <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} style={{ color: 'var(--error)', textAlign: 'left' }}>
               Sign Out ({user.name})
