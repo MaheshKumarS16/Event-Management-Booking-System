@@ -4,12 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { getEventDetailsById } from '../services/eventService';
 
 /**
- * PAGE 3 — EVENT DETAILS PAGE (Connected to REST API & Checkout Flow)
- * 
- * Concept Explanation:
- * - What it is: Detailed view for a single selected event from REST API GET /api/events/:id.
- * - Why we need it: Displays comprehensive event schedule, venue address, organizer info, ticket pricing breakdown, and booking entry point.
- * - Where we use it: Mounted at route path '/events/:id'.
+ * PAGE 3 — EVENT DETAILS PAGE
+ * Comprehensive view of event schedule, venue specs, organizer info, ticket pricing, and booking entry point.
  */
 function EventDetails() {
   const { id } = useParams();
@@ -22,9 +18,14 @@ function EventDetails() {
   useEffect(() => {
     const fetchEvent = async () => {
       setLoading(true);
-      const data = await getEventDetailsById(id);
-      setEvent(data);
-      setLoading(false);
+      try {
+        const data = await getEventDetailsById(id);
+        setEvent(data);
+      } catch (err) {
+        console.error('Fetch event details error:', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchEvent();
@@ -32,7 +33,7 @@ function EventDetails() {
 
   if (loading) {
     return (
-      <div className="container" style={{ padding: '4rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+      <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
         Loading event details...
       </div>
     );
@@ -40,19 +41,20 @@ function EventDetails() {
 
   if (!event) {
     return (
-      <div className="container" style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
-        <h2 style={{ color: '#f8fafc' }}>Event Not Found</h2>
-        <Link to="/events" className="btn-primary" style={{ marginTop: '1rem' }}>Back to All Events</Link>
+      <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
+        <h2 style={{ color: 'var(--text-main)', marginBottom: '1rem' }}>Event Not Found</h2>
+        <Link to="/events" className="btn-primary">Back to All Events</Link>
       </div>
     );
   }
 
-  const categoryName = typeof event.category === 'object' ? event.category.name : event.category;
-  const organizerName = typeof event.organizer === 'object' ? event.organizer.name : event.organizer;
+  const categoryName = typeof event.category === 'object' ? event.category?.name : (event.category || 'General');
+  const organizerName = typeof event.organizer === 'object' ? event.organizer?.name : (event.organizer || 'Event Organizer');
 
-  const totalCapacity = event.totalCapacity || event.ticketTypes.reduce((acc, t) => acc + t.quantity, 0);
-  const soldTickets = event.soldTickets !== undefined ? event.soldTickets : event.ticketTypes.reduce((acc, t) => acc + t.soldQuantity, 0);
-  const totalAvailable = totalCapacity - soldTickets;
+  const ticketTiers = event.ticketTypes || [];
+  const totalCapacity = event.totalCapacity || ticketTiers.reduce((acc, t) => acc + (t.quantity || 0), 0);
+  const soldTickets = event.soldTickets !== undefined ? event.soldTickets : ticketTiers.reduce((acc, t) => acc + (t.soldQuantity || 0), 0);
+  const totalAvailable = Math.max(0, totalCapacity - soldTickets);
 
   const isBookable = (event.status === 'Published' || !event.status) && totalAvailable > 0;
 
@@ -66,20 +68,20 @@ function EventDetails() {
   };
 
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem 4rem 1.5rem' }}>
+    <div className="container" style={{ padding: '2rem 1rem 5rem 1rem' }}>
       
       {/* Back Link */}
-      <Link to="/events" style={{ color: 'var(--text-muted)', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem' }}>
+      <Link to="/events" style={{ color: 'var(--text-muted)', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.25rem' }}>
         ← Back to All Events
       </Link>
 
       {/* Hero Banner */}
       <div style={{
         position: 'relative',
-        height: '340px',
+        height: 'clamp(240px, 35vw, 360px)',
         borderRadius: 'var(--radius-lg)',
         overflow: 'hidden',
-        marginBottom: '2.5rem',
+        marginBottom: '2rem',
         border: '1px solid var(--border)'
       }}>
         <img 
@@ -93,20 +95,20 @@ function EventDetails() {
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.2) 100%)',
+          background: 'linear-gradient(to top, rgba(15, 23, 42, 0.96) 0%, rgba(15, 23, 42, 0.3) 100%)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
-          padding: '2rem'
+          padding: 'clamp(1rem, 3vw, 2rem)'
         }}>
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.65rem', flexWrap: 'wrap' }}>
             <span className="badge badge-success">{categoryName}</span>
             <span className={`badge ${event.status === 'Published' || !event.status ? 'badge-success' : 'badge-warning'}`}>
               Status: {event.status || 'Published'}
             </span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: '800', color: '#f8fafc', lineHeight: '1.2' }}>
+          <h1 style={{ fontSize: 'clamp(1.5rem, 4vw, 2.5rem)', fontWeight: '800', color: '#ffffff', lineHeight: '1.2' }}>
             {event.title}
           </h1>
         </div>
@@ -115,63 +117,63 @@ function EventDetails() {
       {/* Grid Layout: Main Info & Booking Sidebar */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2.5rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
+        gap: '2rem',
         alignItems: 'start'
       }}>
         
         {/* Left Column: Event Overview */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           
           {/* Description */}
           <div className="glass-card">
-            <h2 style={{ fontSize: '1.3rem', fontWeight: '700', color: '#f8fafc', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.85rem' }}>
               About This Event
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.7', whiteSpace: 'pre-line' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.96rem', lineHeight: '1.7', whiteSpace: 'pre-line' }}>
               {event.description}
             </p>
           </div>
 
           {/* Date, Time & Venue Specs */}
           <div className="glass-card">
-            <h2 style={{ fontSize: '1.3rem', fontWeight: '700', color: '#f8fafc', marginBottom: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '1rem' }}>
               Date, Time & Location
             </h2>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '1rem' }}>
               <div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
                   📅 Event Dates
                 </span>
-                <p style={{ color: '#f8fafc', fontWeight: '600', marginTop: '0.2rem' }}>
-                  {event.startDate} to {event.endDate}
+                <p style={{ color: 'var(--text-main)', fontWeight: '600', marginTop: '0.2rem' }}>
+                  {event.startDate} {event.endDate && event.endDate !== event.startDate ? `to ${event.endDate}` : ''}
                 </p>
               </div>
 
               <div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
                   ⏰ Schedule
                 </span>
-                <p style={{ color: '#f8fafc', fontWeight: '600', marginTop: '0.2rem' }}>
-                  {event.startTime} - {event.endTime}
+                <p style={{ color: 'var(--text-main)', fontWeight: '600', marginTop: '0.2rem' }}>
+                  {event.startTime} - {event.endTime || 'Wrap'}
                 </p>
               </div>
 
               <div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
                   📍 Venue Name
                 </span>
-                <p style={{ color: '#f8fafc', fontWeight: '600', marginTop: '0.2rem' }}>
+                <p style={{ color: 'var(--text-main)', fontWeight: '600', marginTop: '0.2rem' }}>
                   {event.venue}
                 </p>
               </div>
 
               <div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
                   🏢 City & Address
                 </span>
-                <p style={{ color: '#f8fafc', fontWeight: '600', marginTop: '0.2rem' }}>
+                <p style={{ color: 'var(--text-main)', fontWeight: '600', marginTop: '0.2rem' }}>
                   {event.address}, {event.city}
                 </p>
               </div>
@@ -181,24 +183,25 @@ function EventDetails() {
           {/* Organizer Info */}
           <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{
-              width: '50px',
-              height: '50px',
+              width: '46px',
+              height: '46px',
               borderRadius: '50%',
               backgroundColor: 'var(--primary-light)',
               color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.4rem',
-              fontWeight: '800'
+              fontSize: '1.3rem',
+              fontWeight: '800',
+              flexShrink: 0
             }}>
               🎪
             </div>
             <div>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', fontWeight: '700' }}>
                 Hosted By
               </span>
-              <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#f8fafc' }}>
+              <h4 style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-main)' }}>
                 {organizerName}
               </h4>
             </div>
@@ -207,25 +210,25 @@ function EventDetails() {
         </div>
 
         {/* Right Column: Ticket Tiers & Booking Action Sidebar */}
-        <div className="glass-card" style={{ position: 'sticky', top: '100px' }}>
-          <h2 style={{ fontSize: '1.3rem', fontWeight: '700', color: '#f8fafc', marginBottom: '0.5rem' }}>
+        <div className="glass-card" style={{ position: 'sticky', top: '90px' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.4rem' }}>
             Ticket Tiers
           </h2>
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
             Choose your preferred ticket tier:
           </p>
 
           {/* Ticket Tiers Breakdown */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.75rem' }}>
-            {event.ticketTypes.map((ticket, index) => {
-              const tierAvailable = ticket.quantity - ticket.soldQuantity;
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem' }}>
+            {ticketTiers.map((ticket, index) => {
+              const tierAvailable = (ticket.quantity || 0) - (ticket.soldQuantity || 0);
               return (
                 <div 
                   key={ticket._id || index}
                   style={{
-                    padding: '1rem',
+                    padding: '0.85rem 1rem',
                     borderRadius: 'var(--radius-md)',
-                    backgroundColor: 'var(--bg-dark)',
+                    backgroundColor: 'var(--bg-input)',
                     border: '1px solid var(--border)',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -233,13 +236,13 @@ function EventDetails() {
                   }}
                 >
                   <div>
-                    <h4 style={{ color: '#f8fafc', fontWeight: '700', fontSize: '1rem' }}>{ticket.name}</h4>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
+                    <h4 style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '0.95rem' }}>{ticket.name}</h4>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
                       {tierAvailable > 0 ? `${tierAvailable} remaining` : 'Sold Out'}
                     </span>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--primary)' }}>
+                    <span style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--primary)' }}>
                       ₹{ticket.price}
                     </span>
                   </div>
@@ -250,17 +253,18 @@ function EventDetails() {
 
           {/* Seat Capacity Bar */}
           <div style={{ marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
               <span style={{ color: 'var(--text-muted)' }}>Ticket Availability</span>
               <span style={{ fontWeight: '700', color: totalAvailable > 0 ? 'var(--success)' : 'var(--error)' }}>
-                {totalAvailable} / {totalCapacity} Seats Available
+                {totalAvailable} / {totalCapacity} Seats Left
               </span>
             </div>
-            <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--bg-dark)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+            <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--bg-input)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
               <div style={{
                 height: '100%',
-                width: `${totalCapacity > 0 ? (soldTickets / totalCapacity) * 100 : 0}%`,
-                backgroundColor: 'var(--primary)'
+                width: `${totalCapacity > 0 ? Math.min(100, (soldTickets / totalCapacity) * 100) : 0}%`,
+                backgroundColor: 'var(--primary)',
+                transition: 'width 0.3s ease'
               }}></div>
             </div>
           </div>
@@ -272,17 +276,15 @@ function EventDetails() {
             className="btn-primary"
             style={{
               width: '100%',
-              padding: '0.85rem',
-              fontSize: '1rem',
-              opacity: isBookable ? 1 : 0.5,
-              cursor: isBookable ? 'pointer' : 'not-allowed'
+              padding: '0.8rem',
+              fontSize: '0.98rem'
             }}
           >
             {isBookable ? (user ? 'Proceed to Ticket Selection →' : 'Sign In to Book Tickets') : 'Booking Unavailable'}
           </button>
 
           {!isBookable && (
-            <p style={{ fontSize: '0.78rem', color: 'var(--error)', textAlign: 'center', marginTop: '0.6rem' }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--error)', textAlign: 'center', marginTop: '0.5rem' }}>
               This event is either completed, cancelled, or sold out.
             </p>
           )}

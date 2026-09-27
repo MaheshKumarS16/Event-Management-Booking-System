@@ -4,12 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { DEMO_CREDENTIALS } from '../utils/mockData';
 
 /**
- * PAGE 4 — LOGIN PAGE (Connected to Backend Authentication API)
- * 
- * Concept Explanation:
- * - What it is: Authentication page connected to backend REST API POST /api/auth/login.
- * - Why we need it: Authenticates user credentials against MongoDB database and stores JWT session token.
- * - Where we use it: Mounted at route path '/login'.
+ * PAGE 4 — LOGIN PAGE
+ * Connected to backend REST API POST /api/auth/login.
+ * Authenticates user credentials, retrieves JWT token, and redirects role-appropriately.
  */
 function Login() {
   const navigate = useNavigate();
@@ -23,13 +20,13 @@ function Login() {
   const [successMsg, setSuccessMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Quick fill helper for easy testing
+  // Quick fill helper for easy testing & demo presentation
   const handleQuickFill = (roleKey) => {
     const creds = DEMO_CREDENTIALS[roleKey];
     setEmail(creds.email);
     setPassword(creds.password);
     setError('');
-    setSuccessMsg(`Filled ${creds.role} credentials! Click Sign In.`);
+    setSuccessMsg(`Loaded ${creds.role} credentials! Click Sign In.`);
   };
 
   const handleSubmit = async (e) => {
@@ -48,67 +45,74 @@ function Login() {
 
     if (result.success) {
       setSuccessMsg(`Authenticated as ${result.user.name} (${result.user.role.toUpperCase()})! Redirecting...`);
-      const redirectPath = location.state?.from?.pathname || '/events';
+      
+      // Determine smart role-based destination or preserve attempted protected route
+      let defaultPath = '/events';
+      if (result.user.role === 'admin') defaultPath = '/admin/dashboard';
+      else if (result.user.role === 'organizer') defaultPath = '/organizer/dashboard';
+
+      const redirectPath = location.state?.from?.pathname || defaultPath;
       setTimeout(() => {
         navigate(redirectPath);
-      }, 1000);
+      }, 700);
     } else {
       setError(result.message);
     }
   };
 
   return (
-    <div className="container" style={{ padding: '3.5rem 1.5rem 5rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
+    <div className="container" style={{ padding: '3rem 1rem 5rem 1rem', display: 'flex', justifyContent: 'center' }}>
       
-      <div style={{ width: '100%', maxWidth: '480px' }}>
+      <div style={{ width: '100%', maxWidth: '460px' }}>
         
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
           <div style={{
-            width: '48px',
-            height: '48px',
+            width: '46px',
+            height: '46px',
             borderRadius: '12px',
             background: 'linear-gradient(135deg, #6366f1 0%, #ec4899 100%)',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: '800',
-            fontSize: '1.5rem',
+            fontSize: '1.4rem',
             color: '#fff',
-            marginBottom: '0.85rem'
+            marginBottom: '0.75rem',
+            boxShadow: '0 4px 15px rgba(99, 102, 241, 0.35)'
           }}>
             E
           </div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#f8fafc' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
             Sign In to Eventify
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', marginTop: '0.2rem' }}>
-            Access your bookings, organizer events, or admin dashboard
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.2rem' }}>
+            Access ticket bookings, organizer events, or system admin controls
           </p>
         </div>
 
-        {/* DEMO CREDENTIALS ACCORDION BOX (Prompt Requirement Rule 5) */}
+        {/* DEMO CREDENTIALS QUICK FILL CARD */}
         <div className="glass-card" style={{
-          backgroundColor: 'rgba(99, 102, 241, 0.12)',
-          borderColor: 'rgba(99, 102, 241, 0.3)',
-          padding: '1.25rem',
-          marginBottom: '1.75rem'
+          backgroundColor: 'var(--primary-light)',
+          borderColor: 'rgba(99, 102, 241, 0.35)',
+          padding: '1.15rem',
+          marginBottom: '1.5rem'
         }}>
-          <h3 style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
-            🔑 Required Demo Login Credentials
+          <h3 style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '0.65rem' }}>
+            🔑 Demo Quick-Login Accounts
           </h3>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.83rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.82rem' }}>
             
             {/* Customer Credentials */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <strong>Customer:</strong> <code>{DEMO_CREDENTIALS.customer.email}</code>
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
+                <strong style={{ color: 'var(--text-main)' }}>Customer:</strong> <code style={{ color: 'var(--text-muted)' }}>{DEMO_CREDENTIALS.customer.email}</code>
               </div>
               <button 
                 type="button"
                 onClick={() => handleQuickFill('customer')}
-                style={{ background: 'var(--primary)', color: '#fff', padding: '0.2rem 0.55rem', borderRadius: '4px', fontSize: '0.75rem' }}
+                style={{ background: 'var(--primary)', color: '#fff', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '700', flexShrink: 0 }}
               >
                 Auto-fill
               </button>
@@ -116,13 +120,13 @@ function Login() {
 
             {/* Organizer Credentials */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <strong>Organizer:</strong> <code>{DEMO_CREDENTIALS.organizer.email}</code>
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
+                <strong style={{ color: 'var(--text-main)' }}>Organizer:</strong> <code style={{ color: 'var(--text-muted)' }}>{DEMO_CREDENTIALS.organizer.email}</code>
               </div>
               <button 
                 type="button"
                 onClick={() => handleQuickFill('organizer')}
-                style={{ background: 'var(--secondary)', color: '#fff', padding: '0.2rem 0.55rem', borderRadius: '4px', fontSize: '0.75rem' }}
+                style={{ background: 'var(--secondary)', color: '#fff', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '700', flexShrink: 0 }}
               >
                 Auto-fill
               </button>
@@ -130,27 +134,23 @@ function Login() {
 
             {/* Admin Credentials */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <strong>Admin:</strong> <code>{DEMO_CREDENTIALS.admin.email}</code>
+              <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
+                <strong style={{ color: 'var(--text-main)' }}>Admin:</strong> <code style={{ color: 'var(--text-muted)' }}>{DEMO_CREDENTIALS.admin.email}</code>
               </div>
               <button 
                 type="button"
                 onClick={() => handleQuickFill('admin')}
-                style={{ background: 'var(--accent)', color: '#fff', padding: '0.2rem 0.55rem', borderRadius: '4px', fontSize: '0.75rem' }}
+                style={{ background: 'var(--accent)', color: '#fff', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: '700', flexShrink: 0 }}
               >
                 Auto-fill
               </button>
             </div>
-            
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
-              Password for all demo accounts: <code>SmartHire@123</code> (or role passwords)
-            </p>
           </div>
         </div>
 
         {/* LOGIN FORM */}
         <div className="glass-card">
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
             
             {error && (
               <div style={{ padding: '0.75rem', backgroundColor: 'var(--error-bg)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--radius-md)', color: 'var(--error)', fontSize: '0.85rem' }}>
@@ -165,33 +165,21 @@ function Login() {
             )}
 
             {/* Email Field */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                Email Address
-              </label>
+            <div className="form-group">
+              <label>Email Address</label>
               <input 
                 type="email"
                 required
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--bg-dark)',
-                  border: '1px solid var(--border)',
-                  color: '#f8fafc',
-                  fontSize: '0.95rem'
-                }}
+                className="form-control"
               />
             </div>
 
             {/* Password Field */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
-                Password
-              </label>
+            <div className="form-group">
+              <label>Password</label>
               <div style={{ position: 'relative' }}>
                 <input 
                   type={showPassword ? 'text' : 'password'}
@@ -199,15 +187,8 @@ function Login() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 2.8rem 0.75rem 1rem',
-                    borderRadius: 'var(--radius-md)',
-                    backgroundColor: 'var(--bg-dark)',
-                    border: '1px solid var(--border)',
-                    color: '#f8fafc',
-                    fontSize: '0.95rem'
-                  }}
+                  className="form-control"
+                  style={{ paddingRight: '4rem' }}
                 />
                 <button
                   type="button"
@@ -221,10 +202,10 @@ function Login() {
                     border: 'none',
                     color: 'var(--text-muted)',
                     cursor: 'pointer',
-                    fontSize: '0.85rem'
+                    fontSize: '0.8rem'
                   }}
                 >
-                  {showPassword ? '👁️ Hide' : '👁️ Show'}
+                  {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
             </div>
@@ -234,14 +215,14 @@ function Login() {
               type="submit"
               disabled={isSubmitting}
               className="btn-primary"
-              style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', marginTop: '0.5rem', opacity: isSubmitting ? 0.7 : 1 }}
+              style={{ width: '100%', padding: '0.8rem', fontSize: '0.98rem', marginTop: '0.25rem' }}
             >
               {isSubmitting ? 'Authenticating...' : 'Sign In'}
             </button>
           </form>
 
           {/* Footer Navigation */}
-          <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)', fontSize: '0.88rem' }}>
+          <div style={{ textAlign: 'center', marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border)', fontSize: '0.88rem' }}>
             <span style={{ color: 'var(--text-muted)' }}>Don't have an account? </span>
             <Link to="/register" style={{ color: 'var(--primary)', fontWeight: '700' }}>
               Register Here

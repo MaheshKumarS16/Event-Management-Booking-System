@@ -10,18 +10,17 @@ function StatCard({ title, value }) {
   return (
     <div
       style={{
-        background: 'rgba(255,255,255,0.05)',
-        backdropFilter: 'blur(8px)',
+        background: 'var(--bg-card)',
         borderRadius: 'var(--radius-lg)',
-        padding: '1rem',
+        padding: '1.25rem 1rem',
         textAlign: 'center',
         border: '1px solid var(--border)',
-        transition: 'transform 0.2s',
+        transition: 'transform 0.2s, box-shadow 0.2s',
       }}
       className="stat-card"
     >
-      <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.85rem' }}>{title}</p>
-      <h3 style={{ color: '#f8fafc', margin: '0.3rem 0 0', fontSize: '1.5rem' }}>{value}</h3>
+      <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.85rem', fontWeight: '600' }}>{title}</p>
+      <h3 style={{ color: 'var(--text-main)', margin: '0.35rem 0 0', fontSize: '1.5rem', fontWeight: '800' }}>{value}</h3>
     </div>
   );
 }

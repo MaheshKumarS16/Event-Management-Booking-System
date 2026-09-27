@@ -7,11 +7,7 @@ import { createBookingApi } from '../services/bookingService';
 
 /**
  * PAGE 6 & 7 — TICKET SELECTION & CHECKOUT PAGE
- * 
- * Concept Explanation:
- * - What it is: Checkout page where customer selects ticket quantities, reviews order breakdown, and completes mock payment.
- * - Why we need it: Connects frontend selection to backend POST /api/bookings endpoint.
- * - Where we use it: Mounted at route path '/events/:id/checkout'.
+ * Handles tier selection, customer review, simulated payment gateway, and booking creation.
  */
 function Checkout() {
   const { id } = useParams();
@@ -28,9 +24,14 @@ function Checkout() {
   useEffect(() => {
     const fetchEvent = async () => {
       setLoading(true);
-      const data = await getEventDetailsById(id);
-      setEvent(data);
-      setLoading(false);
+      try {
+        const data = await getEventDetailsById(id);
+        setEvent(data);
+      } catch (err) {
+        console.error('Checkout event fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchEvent();
@@ -51,7 +52,7 @@ function Checkout() {
     }
 
     if (mockPaymentState === 'failure') {
-      setError('Mock Payment Failed: Simulated payment declined. Please try again with Success state selected.');
+      setError('Mock Payment Failed: Simulated payment declined. Select "Payment Success" to complete order.');
       return;
     }
 
@@ -73,7 +74,7 @@ function Checkout() {
 
   if (loading) {
     return (
-      <div className="container" style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+      <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
         Loading checkout details...
       </div>
     );
@@ -81,90 +82,90 @@ function Checkout() {
 
   if (!event) {
     return (
-      <div className="container" style={{ padding: '4rem', textAlign: 'center' }}>
-        <h2 style={{ color: '#f8fafc' }}>Event Not Found</h2>
+      <div className="container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
+        <h2 style={{ color: 'var(--text-main)' }}>Event Not Found</h2>
         <Link to="/events" className="btn-primary" style={{ marginTop: '1rem' }}>Back to All Events</Link>
       </div>
     );
   }
 
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem 4rem 1.5rem' }}>
+    <div className="container" style={{ padding: '2rem 1rem 5rem 1rem' }}>
       
       {/* Back Link */}
-      <Link to={`/events/${id}`} style={{ color: 'var(--text-muted)', fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem' }}>
+      <Link to={`/events/${id}`} style={{ color: 'var(--text-muted)', fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.25rem' }}>
         ← Back to Event Details
       </Link>
 
-      <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#f8fafc', marginBottom: '2rem' }}>
+      <h1 style={{ fontSize: 'clamp(1.75rem, 4vw, 2.3rem)', fontWeight: '800', color: 'var(--text-main)', marginBottom: '1.75rem', letterSpacing: '-0.02em' }}>
         Event Ticket Checkout
       </h1>
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2.5rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+        gap: '2rem',
         alignItems: 'start'
       }}>
         
         {/* Left Column: Ticket Selection & Customer Info */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           
           {/* Customer Details */}
           <div className="glass-card">
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#f8fafc', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.85rem' }}>
               👤 Customer Details
             </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', fontSize: '0.9rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '0.85rem', fontSize: '0.88rem' }}>
               <div>
-                <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: '700' }}>Name</span>
-                <p style={{ fontWeight: '600', color: '#f8fafc' }}>{user?.name}</p>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: '700' }}>Name</span>
+                <p style={{ fontWeight: '600', color: 'var(--text-main)', marginTop: '0.15rem' }}>{user?.name}</p>
               </div>
               <div>
-                <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: '700' }}>Email</span>
-                <p style={{ fontWeight: '600', color: '#f8fafc' }}>{user?.email}</p>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: '700' }}>Email</span>
+                <p style={{ fontWeight: '600', color: 'var(--text-main)', marginTop: '0.15rem' }}>{user?.email}</p>
               </div>
               <div>
-                <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: '700' }}>Phone</span>
-                <p style={{ fontWeight: '600', color: '#f8fafc' }}>{user?.phone}</p>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: '700' }}>Phone</span>
+                <p style={{ fontWeight: '600', color: 'var(--text-main)', marginTop: '0.15rem' }}>{user?.phone || 'Not provided'}</p>
               </div>
             </div>
           </div>
 
           {/* Ticket Selector */}
           <div className="glass-card">
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#f8fafc', marginBottom: '1.25rem' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '1rem' }}>
               🎟️ Select Ticket Quantities
             </h3>
             <TicketSelector 
-              ticketTypes={event.ticketTypes} 
+              ticketTypes={event.ticketTypes || []} 
               onSelectionChange={handleSelectionChange} 
             />
           </div>
 
           {/* Mock Payment Selector */}
           <div className="glass-card">
-            <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#f8fafc', marginBottom: '0.75rem' }}>
-              💳 Payment Options (Mock Gateway)
+            <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              💳 Payment Mode (Simulated Gateway)
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              Version 1 uses simulated payment processing. Choose payment outcome to test logic:
+              Select payment simulation mode to test end-to-end checkout:
             </p>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap' }}>
               <label style={{
-                flex: 1,
-                padding: '0.85rem',
+                flex: '1 1 180px',
+                padding: '0.85rem 1rem',
                 borderRadius: 'var(--radius-md)',
-                backgroundColor: mockPaymentState === 'success' ? 'var(--primary-light)' : 'var(--bg-dark)',
+                backgroundColor: mockPaymentState === 'success' ? 'var(--primary-light)' : 'var(--bg-input)',
                 border: mockPaymentState === 'success' ? '1px solid var(--primary)' : '1px solid var(--border)',
                 cursor: 'pointer',
-                fontSize: '0.9rem',
+                fontSize: '0.88rem',
                 fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                color: '#f8fafc'
+                color: 'var(--text-main)'
               }}>
                 <input 
                   type="radio"
@@ -173,22 +174,22 @@ function Checkout() {
                   checked={mockPaymentState === 'success'}
                   onChange={() => setMockPaymentState('success')}
                 />
-                ✅ Mock Payment Success
+                <span>✅ Payment Success</span>
               </label>
 
               <label style={{
-                flex: 1,
-                padding: '0.85rem',
+                flex: '1 1 180px',
+                padding: '0.85rem 1rem',
                 borderRadius: 'var(--radius-md)',
-                backgroundColor: mockPaymentState === 'failure' ? 'var(--error-bg)' : 'var(--bg-dark)',
+                backgroundColor: mockPaymentState === 'failure' ? 'var(--error-bg)' : 'var(--bg-input)',
                 border: mockPaymentState === 'failure' ? '1px solid var(--error)' : '1px solid var(--border)',
                 cursor: 'pointer',
-                fontSize: '0.9rem',
+                fontSize: '0.88rem',
                 fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                color: '#f8fafc'
+                color: 'var(--text-main)'
               }}>
                 <input 
                   type="radio"
@@ -197,7 +198,7 @@ function Checkout() {
                   checked={mockPaymentState === 'failure'}
                   onChange={() => setMockPaymentState('failure')}
                 />
-                ❌ Mock Payment Fail
+                <span>❌ Simulate Failure</span>
               </label>
             </div>
           </div>
@@ -205,33 +206,33 @@ function Checkout() {
         </div>
 
         {/* Right Column: Order Summary Sidebar */}
-        <div className="glass-card" style={{ position: 'sticky', top: '100px' }}>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#f8fafc', marginBottom: '1.25rem' }}>
+        <div className="glass-card" style={{ position: 'sticky', top: '90px' }}>
+          <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '1rem' }}>
             📋 Booking Summary
           </h3>
 
           {/* Event Mini Info */}
-          <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
-            <h4 style={{ color: '#f8fafc', fontWeight: '700', fontSize: '1.05rem', marginBottom: '0.3rem' }}>
+          <div style={{ marginBottom: '1.25rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+            <h4 style={{ color: 'var(--text-main)', fontWeight: '700', fontSize: '1.05rem', marginBottom: '0.25rem' }}>
               {event.title}
             </h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>📅 {event.startDate} • {event.startTime}</p>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>📍 {event.venue}, {event.city}</p>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>📅 {event.startDate} • {event.startTime}</p>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>📍 {event.venue}, {event.city}</p>
           </div>
 
           {/* Selected Item Breakdown */}
           {selection.selectedTickets.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.25rem' }}>
               {selection.selectedTickets.map((t, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem' }}>
                   <span style={{ color: 'var(--text-muted)' }}>{t.name} (x{t.quantity})</span>
-                  <span style={{ fontWeight: '700', color: '#f8fafc' }}>₹{t.price * t.quantity}</span>
+                  <span style={{ fontWeight: '700', color: 'var(--text-main)' }}>₹{t.price * t.quantity}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', marginBottom: '1.5rem' }}>
-              No tickets selected yet. Use the selector to add tickets.
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '1.25rem' }}>
+              No tickets selected yet. Use the selector on the left to add tickets.
             </p>
           )}
 
@@ -242,13 +243,13 @@ function Checkout() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '1.5rem'
+            marginBottom: '1.25rem'
           }}>
             <div>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Total Amount</span>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>{selection.totalQty} Ticket(s)</p>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Total Amount</span>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{selection.totalQty} Ticket(s)</p>
             </div>
-            <span style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--primary)' }}>
+            <span style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)' }}>
               ₹{selection.grandTotal}
             </span>
           </div>
@@ -265,12 +266,11 @@ function Checkout() {
             className="btn-primary"
             style={{
               width: '100%',
-              padding: '0.85rem',
-              fontSize: '1rem',
-              opacity: (isSubmitting || selection.totalQty <= 0) ? 0.6 : 1
+              padding: '0.8rem',
+              fontSize: '0.98rem'
             }}
           >
-            {isSubmitting ? 'Processing Payment...' : 'Confirm & Book Now'}
+            {isSubmitting ? 'Processing Payment...' : 'Confirm & Reserve Tickets'}
           </button>
         </div>
 

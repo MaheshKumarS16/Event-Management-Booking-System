@@ -20,7 +20,7 @@ const validateResult = (req, res, next) => {
  */
 const registerValidation = [
   body('name').trim().notEmpty().withMessage('Full name is required'),
-  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('email').trim().isEmail().withMessage('Please provide a valid email address').normalizeEmail({ gmail_remove_dots: false }),
   body('phone').trim().isLength({ min: 10 }).withMessage('Phone number must be at least 10 digits'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
   body('role')
@@ -34,7 +34,7 @@ const registerValidation = [
  * Login Rules
  */
 const loginValidation = [
-  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('email').trim().isEmail().withMessage('Please provide a valid email address').normalizeEmail({ gmail_remove_dots: false }),
   body('password').notEmpty().withMessage('Password is required'),
   validateResult
 ];

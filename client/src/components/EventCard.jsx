@@ -3,15 +3,23 @@ import { Link } from 'react-router-dom';
 
 /**
  * Reusable Event Card Component
- * 
- * Concept Explanation:
- * - What it is: A modular card component that formats individual event information.
- * - Why we need it: Promotes DRY (Don't Repeat Yourself) code across Home and Events pages.
- * - Where we use it: Rendered in lists on Home.jsx and Events.jsx.
+ * Formats event overview with responsive image, pricing, and availability.
+ * Robust across both mock data and real MongoDB documents.
  */
 function EventCard({ event }) {
-  const availableTickets = event.totalCapacity - event.soldTickets;
+  const eventId = event._id || event.id;
+
+  const totalCap = event.totalCapacity || 
+    (event.ticketTypes?.length ? event.ticketTypes.reduce((acc, t) => acc + (t.quantity || 0), 0) : 100);
+  const sold = event.soldTickets !== undefined ? event.soldTickets : 
+    (event.ticketTypes?.length ? event.ticketTypes.reduce((acc, t) => acc + (t.soldQuantity || 0), 0) : 0);
+  const availableTickets = Math.max(0, totalCap - sold);
   const isSoldOut = availableTickets <= 0;
+
+  const startingPrice = event.startingPrice !== undefined ? event.startingPrice : 
+    (event.ticketTypes?.length ? Math.min(...event.ticketTypes.map(t => t.price)) : 0);
+
+  const categoryName = typeof event.category === 'object' ? event.category?.name : (event.category || 'General');
 
   return (
     <div className="glass-card" style={{
@@ -19,7 +27,6 @@ function EventCard({ event }) {
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',
-      transition: 'transform 0.25s ease, box-shadow 0.25s ease',
       height: '100%',
       position: 'relative'
     }}>
@@ -35,7 +42,6 @@ function EventCard({ event }) {
             transition: 'transform 0.3s ease'
           }}
           onError={(e) => {
-            // Fallback image if remote URL fails to load
             e.target.src = 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=800&q=80';
           }}
         />
@@ -47,17 +53,17 @@ function EventCard({ event }) {
           left: '12px',
           backgroundColor: 'rgba(15, 23, 42, 0.85)',
           backdropFilter: 'blur(6px)',
-          color: '#f8fafc',
+          color: '#ffffff',
           fontSize: '0.75rem',
           fontWeight: '700',
           padding: '0.3rem 0.75rem',
           borderRadius: 'var(--radius-full)',
-          border: '1px solid var(--border-light)'
+          border: '1px solid rgba(255, 255, 255, 0.15)'
         }}>
-          {event.category}
+          {categoryName}
         </span>
 
-        {/* Featured Tag if applicable */}
+        {/* Featured Tag */}
         {event.featured && (
           <span style={{
             position: 'absolute',
@@ -81,7 +87,7 @@ function EventCard({ event }) {
         <h3 style={{
           fontSize: '1.1rem',
           fontWeight: '700',
-          color: '#f8fafc',
+          color: 'var(--text-main)',
           lineHeight: '1.35',
           marginBottom: '0.65rem',
           display: '-webkit-box',
@@ -95,7 +101,7 @@ function EventCard({ event }) {
         {/* Date & Time */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>
           <span>📅</span>
-          <span>{event.startDate} • {event.startTime}</span>
+          <span>{event.startDate} • {event.startTime || 'Scheduled'}</span>
         </div>
 
         {/* Location / Venue */}
@@ -118,12 +124,12 @@ function EventCard({ event }) {
           <div>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)', display: 'block' }}>Starts from</span>
             <span style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--primary)' }}>
-              ₹{event.startingPrice}
+              ₹{startingPrice}
             </span>
           </div>
 
           <div style={{ textAlign: 'right' }}>
-            <span className={`badge ${isSoldOut ? 'badge-error' : 'badge-success'}`} style={{ fontSize: '0.75rem' }}>
+            <span className={`badge ${isSoldOut ? 'badge-error' : 'badge-success'}`} style={{ fontSize: '0.72rem' }}>
               {isSoldOut ? 'Sold Out' : `${availableTickets} left`}
             </span>
           </div>
@@ -131,7 +137,7 @@ function EventCard({ event }) {
 
         {/* Action Button */}
         <Link 
-          to={`/events/${event.id}`}
+          to={`/events/${eventId}`}
           className="btn-primary"
           style={{
             width: '100%',
